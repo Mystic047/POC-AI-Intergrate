@@ -1,0 +1,62 @@
+# Docker Compose for CPU-only systems (no NVIDIA GPU)
+# Usage: docker-compose -f docker-compose.cpu.yml up
+
+version: '3.8'
+
+services:
+  # Ollama AI Service (CPU only)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  # Model Puller - Downloads the required model on first run
+  ollama-pull:
+    image: ollama/ollama:latest
+    container_name: ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "🔄 Pulling llama3.2 model..."
+        ollama pull llama3.2
+        echo "✅ Model ready!"
+    restart: "no"
+
+  # Maintenance Cost AI CLI Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: maintenance-cost-ai
+    depends_on:
+      ollama-pull:
+        condition: service_completed_successfully
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_TEXT_MODEL=llama3.2
+    volumes:
+      - ./data:/app/data:ro
+    stdin_open: true
+    tty: true
+    restart: "no"
+
+volumes:
+  ollama_data:
+    name: ollama_models

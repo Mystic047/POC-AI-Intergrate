@@ -1,0 +1,30 @@
+{
+  "name": "maintenance-cost-ai",
+  "version": "1.0.0",
+  "description": "POC - AI-powered maintenance cost monitoring with NestJS and Ollama",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main",
+    "cli": "ts-node src/cli.ts",
+    "cli:prod": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.1.1",
+    "@nestjs/core": "^10.0.0",
+    "csv-parse": "^5.5.0",
+    "dotenv": "^17.2.3",
+    "readline": "^1.3.0",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  }
+}
