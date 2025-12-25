@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { IAIProvider, AIProviderType, ChatMessage } from './ai.interface';
+import { 
+  IAIProvider, 
+  AIProviderType, 
+  ChatMessage, 
+  ToolDefinition,
+  GenerateWithToolsResponse,
+  GenerateOptions,
+} from './ai.interface';
 import { AIProviderFactory } from './ai-provider.factory';
 import { WoType, CostType } from '../../types';
 
@@ -43,6 +50,18 @@ export class AIService {
 
   async generateChat(messages: ChatMessage[]): Promise<string> {
     return this.provider.generateChat(messages);
+  }
+
+  /**
+   * Generate response with Function Calling / Tool Use
+   * This is the key method for AI Agent functionality.
+   */
+  async generateWithTools(
+    messages: ChatMessage[],
+    tools: ToolDefinition[],
+    options?: GenerateOptions
+  ): Promise<GenerateWithToolsResponse> {
+    return this.provider.generateWithTools(messages, tools, options);
   }
 
   async parseQuestion(question: string): Promise<ParsedQuery> {
