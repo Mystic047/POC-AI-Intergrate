@@ -12,12 +12,20 @@ export interface FilterCriteria {
   costType?: CostType;
 }
 
+interface RawCsvRow {
+  year: string;
+  month: string;
+  woType: string;
+  costType: string;
+  cost: string;
+}
+
 @Injectable()
 export class CsvService {
   private data: MaintenanceCost[] = [];
 
   async loadData(filePath?: string): Promise<MaintenanceCost[]> {
-    const csvPath = filePath || path.join(process.cwd(), 'data', 'maintenance.csv');
+    const csvPath = filePath || path.join(process.cwd(), 'data', 'maintenance_costs.csv');
 
     if (!fs.existsSync(csvPath)) {
       console.log('CSV file not found, using sample data');
@@ -26,19 +34,46 @@ export class CsvService {
     }
 
     const content = fs.readFileSync(csvPath, 'utf-8');
-    const records = parse(content, {
+    const records: RawCsvRow[] = parse(content, {
       columns: true,
       skip_empty_lines: true,
     });
 
-    this.data = records.map((row: any) => ({
-      year: parseInt(row.year),
-      month: parseInt(row.month),
-      woType: row.wo_type as WoType,
-      manhrs: parseFloat(row.manhrs) || 0,
-      sparepart: parseFloat(row.sparepart) || 0,
-      outsource: parseFloat(row.outsource) || 0,
-    }));
+
+    const grouped = new Map<string, MaintenanceCost>();
+
+    for (const row of records) {
+      const key = `${row.year}-${row.month}-${row.woType}`;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          year: parseInt(row.year),
+          month: parseInt(row.month),
+          woType: row.woType as WoType,
+          manhrs: 0,
+          sparepart: 0,
+          outsource: 0,
+        });
+      }
+
+      const record = grouped.get(key)!;
+      const cost = parseFloat(row.cost) || 0;
+
+      switch (row.costType) {
+        case 'manhrs':
+          record.manhrs = cost;
+          break;
+        case 'sparepart':
+          record.sparepart = cost;
+          break;
+        case 'outsource':
+          record.outsource = cost;
+          break;
+      }
+    }
+
+    this.data = Array.from(grouped.values());
+    console.log(`Loaded ${this.data.length} aggregated records from ${records.length} CSV rows`);
 
     return this.data;
   }
